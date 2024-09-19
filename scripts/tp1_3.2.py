@@ -146,29 +146,25 @@ class BancoDeDados:
         categorias = []
         for produto in produtos:
             for categoria in produto.get('categorias', []):
-                print(f"Processando categoria: {categoria}")  # Acompanhando cada categoria
+                #print(f"Processando categoria: {categoria}") 
                 partes_categoria = categoria.split('|')
-                parent_id = None  # Para gerenciar a hierarquia de categorias
+                parent_id = None  
                 
                 for subcategoria in partes_categoria:
-                    # Verifica se a subcategoria está no formato nome_categoria[id_categoria]
                     categoria_match = re.match(r"(.*)\[(\d+)\]", subcategoria)
                     if categoria_match:
                         nome_categoria = categoria_match.group(1).strip()
                         id_categoria = int(categoria_match.group(2))
 
-                        # Armazena a categoria e seu pai para inserção
                         categorias.append((id_categoria, nome_categoria, parent_id))
-                        print(f"Categoria válida: ID {id_categoria}, Nome {nome_categoria}, Parent ID {parent_id}")  # Verificação de categoria válida
+                        #print(f"Categoria válida: ID {id_categoria}, Nome {nome_categoria}, Parent ID {parent_id}")  # Verificação de categoria válida
 
-                        # Atualiza o parent_id para a próxima subcategoria
                         parent_id = id_categoria
                     else:
-                        print(f"Formato inválido de categoria: {subcategoria}")  # Categoria mal formatada
+                        print(f"Formato inválido de categoria: {subcategoria}")  
 
-        print(f"Total de categorias processadas: {len(categorias)}")  # Verificar quantas categorias foram processadas
+        print(f"Total de categorias processadas: {len(categorias)}") 
 
-        # Inserção das categorias no banco de dados
         comandos = """
             INSERT INTO categorias (idCategoria, nomeCategoria, idCategoriaPai)
             VALUES (%s, %s, %s)
