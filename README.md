@@ -29,6 +29,8 @@ docker-compose up -d
 
 ### Python
 
+Adicione o arquivo de dados da amazon dendo da pasta scripts.
+
 Vá até o diretório de scripts e execute:
 ```bash
 python3 tp1_3.2.py
