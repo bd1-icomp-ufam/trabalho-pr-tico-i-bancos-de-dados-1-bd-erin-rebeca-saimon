@@ -146,10 +146,10 @@ class BancoDeDados:
         categorias = []
         for produto in produtos:
             for categoria in produto.get('categorias', []):
-                #print(f"Processando categoria: {categoria}") 
-                partes_categoria = categoria.split('|')
-                parent_id = None  
-                
+                #print(f"Processando categoria: {categoria}")
+                partes_categoria = categoria[1:].split('|')
+                parent_id = None
+
                 for subcategoria in partes_categoria:
                     categoria_match = re.match(r"(.*)\[(\d+)\]", subcategoria)
                     if categoria_match:
@@ -157,13 +157,13 @@ class BancoDeDados:
                         id_categoria = int(categoria_match.group(2))
 
                         categorias.append((id_categoria, nome_categoria, parent_id))
-                        #print(f"Categoria válida: ID {id_categoria}, Nome {nome_categoria}, Parent ID {parent_id}")  # Verificação de categoria válida
+                        #print(f"Categoria válida: ID {id_categoria}, Nome {nome_categoria}, Parent ID {parent_id}")
 
                         parent_id = id_categoria
                     else:
-                        print(f"Formato inválido de categoria: {subcategoria}")  
+                        print(f"Formato inválido de categoria: {subcategoria}")
 
-        print(f"Total de categorias processadas: {len(categorias)}") 
+        print(f"Total de categorias processadas: {len(categorias)}")
 
         comandos = """
             INSERT INTO categorias (idCategoria, nomeCategoria, idCategoriaPai)
@@ -172,14 +172,28 @@ class BancoDeDados:
         """
         self.executar_comando(comandos, categorias, muitos=True)
 
-
-
     def inserir_produto_categoria(self, produtos):
         produto_categoria = []
         for produto in produtos:
             for categoria in produto.get('categorias', []):
-                id_categoria = int(categoria.split('|')[0].strip())
-                produto_categoria.append((produto['id_produto'], id_categoria))
+                try:
+                    # Verifica se a categoria está no formato correto e tenta converter o ID
+                    categoria_partes = categoria[1:].split('|')
+                    for parte in categoria_partes:
+                        if len(categoria_partes) >= 2:
+                            id_categoria_str = re.findall( r'\[(.*?)\]', parte)
+                            if id_categoria_str[0].isdigit():
+                                id_categoria = int(id_categoria_str[0])
+                                produto_categoria.append((produto['id_produto'], id_categoria))
+                            else:
+                                print(f"ID da categoria não é um número válido: {id_categoria_str}")
+                        else:
+                            print(f"Categoria malformada: {categoria}")
+                except ValueError as e:
+                    print(f"Erro ao processar categoria: {categoria}. Erro: {e}")
+
+        print(f"Total de produto-categorias processadas: {len(produto_categoria)}")
+
         comandos = """
             INSERT INTO produto_categoria (idProduto, idCategoria)
             VALUES (%s, %s)
@@ -188,16 +202,44 @@ class BancoDeDados:
         self.executar_comando(comandos, produto_categoria, muitos=True)
 
     def inserir_produtos_similares(self, produtos):
-        produtos_similares = []
+        produto_similar = []
+        produtos_existentes = set()
+
+        # Primeiro, verifique quais produtos existem na tabela
+        conn = psycopg2.connect(**self.config_db)
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT asin FROM produto")
+        for row in cursor.fetchall():
+            produtos_existentes.add(row[0])
+        
+        cursor.close()
+        conn.close()
+
+        # Agora, insira os pares de produtos similares somente se ambos existirem
+        conn = psycopg2.connect(**self.config_db)
+        cursor = conn.cursor()
+
         for produto in produtos:
-            for similar in produto.get('produtos_similares', []):
-                produtos_similares.append((produto['ASIN'], similar))
+            if not produto.get('descontinuado', False):
+                asin_produto = produto['ASIN']
+                if asin_produto not in produtos_existentes:
+                    continue  # Pular produtos que não existem na tabela
+
+                for asin_similar in produto.get('produtos_similares', []):
+                    if asin_similar in produtos_existentes:
+                        produto_similar.append((asin_produto, asin_similar))
+
         comandos = """
             INSERT INTO produto_similar (asinProduto, asinProdutoSimilar)
             VALUES (%s, %s)
             ON CONFLICT DO NOTHING
         """
-        self.executar_comando(comandos, produtos_similares, muitos=True)
+        self.executar_comando(comandos, produto_similar, muitos=True)
+
+        cursor.close()
+        conn.close()
+
 
     def extrair_e_inserir_avaliacoes(self, nome_arquivo):
         reviews = []
@@ -287,13 +329,13 @@ if __name__ == "__main__":
     print("Tabelas criadas!")
     
     print("Processando arquivo..")
-    ids_clientes, nomes_grupos = processar_arquivo('amazon-meta.txt')
+    ids_clientes, nomes_grupos = processar_arquivo('teste.txt')
     print("Inserindo clientes...")
     postgres.inserir_clientes(ids_clientes)
     print("Inserindo grupos...")
     postgres.inserir_grupos(nomes_grupos)
     print("Extraindo dados de produtos...")
-    produtos = extrair_dados_produtos('amazon-meta.txt')
+    produtos = extrair_dados_produtos('teste.txt')
     print("Inserindo produtos...")
     postgres.inserir_produtos(produtos)
     print("Inserindo vategorias...")
@@ -303,4 +345,5 @@ if __name__ == "__main__":
     print("Inserindo produtos similares...")
     postgres.inserir_produtos_similares(produtos)
     print("Inserindo avaliações...")
-    postgres.extrair_e_inserir_avaliacoes('amazon-meta.txt')
+    postgres.extrair_e_inserir_avaliacoes('teste.txt')
+    print("Processo finalizado!")
