@@ -25,7 +25,7 @@ Instalando na linha de comando
 
 Criar pasta `postgres-data` na raiz do projeto. Essa pasta **não deve ser enviada** para o github.
 
-Depois você deve subir o docker-compose com o postgres. Da primeira vez vai demorar um pouco, e fique de olho nos logs para qualquer erro.
+Depois você deve subir o docker-compose com o postgres. Na primeira vez vai demorar um pouco, fique de olho nos logs.
 
 ```bash
 docker-compose up -d
