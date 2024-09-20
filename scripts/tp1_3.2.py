@@ -1,3 +1,5 @@
+DATA_PATH = "amazon-data.txt"
+
 import sys
 import subprocess
 
@@ -34,7 +36,7 @@ class BancoDeDados:
         }
 
     def executar_comando(self, comandos, valores=None, muitos=False):
-        """Executa comandos SQL de forma eficiente"""
+        """Executa comandos SQL"""
         conn = psycopg2.connect(**self.config_db)
         cursor = conn.cursor()
         try:
@@ -48,6 +50,7 @@ class BancoDeDados:
             conn.close()
 
     def criar_tabelas(self):
+        """Cria as tableas no banco se elas ainda não existirem"""
         SQL_comandos = [
             """CREATE TABLE IF NOT EXISTS cliente (idCliente VARCHAR PRIMARY KEY)""",
             """CREATE TABLE IF NOT EXISTS categorias (
@@ -99,14 +102,23 @@ class BancoDeDados:
             self.executar_comando(comando)
 
     def inserir_clientes(self, ids_clientes):
-        comandos = "INSERT INTO cliente (idCliente) VALUES (%s) ON CONFLICT (idCliente) DO NOTHING"
-        self.executar_comando(comandos, [(cliente,) for cliente in ids_clientes], muitos=True)
+        """Insere os ids dos clientes na tabela cliente"""
+        conn = psycopg2.connect(**self.config_db)
+        cursor = conn.cursor()
+        for id in ids_clientes:
+            cursor.execute("INSERT INTO cliente (idCliente) VALUES (%s) ON CONFLICT (idCliente) DO NOTHING;", (id,))
+        conn.commit()
+        cursor.close()
+        conn.close()
+
 
     def inserir_grupos(self, nomes_grupos):
+        """Insere os nomes dos grupos"""
         comandos = "INSERT INTO grupo (nomeGrupo) VALUES (%s) ON CONFLICT (nomeGrupo) DO NOTHING"
         self.executar_comando(comandos, [(nome,) for nome in nomes_grupos], muitos=True)
 
     def inserir_produtos(self, produtos):
+        """Insere os produtos"""
         comandos = """
             INSERT INTO produto (idProduto, asin, titulo, idGrupo, rankVendas, "similar")
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -146,7 +158,7 @@ class BancoDeDados:
         categorias = []
         for produto in produtos:
             for categoria in produto.get('categorias', []):
-                #print(f"Processando categoria: {categoria}")
+
                 partes_categoria = categoria[1:].split('|')
                 parent_id = None
 
@@ -157,7 +169,6 @@ class BancoDeDados:
                         id_categoria = int(categoria_match.group(2))
 
                         categorias.append((id_categoria, nome_categoria, parent_id))
-                        #print(f"Categoria válida: ID {id_categoria}, Nome {nome_categoria}, Parent ID {parent_id}")
 
                         parent_id = id_categoria
                     else:
@@ -205,18 +216,18 @@ class BancoDeDados:
         produto_similar = []
         produtos_existentes = set()
 
-        # Primeiro, verifique quais produtos existem na tabela
+        # Verificar quais produtos existem na tabela
         conn = psycopg2.connect(**self.config_db)
         cursor = conn.cursor()
         
-        cursor.execute("SELECT asin FROM produto")
+        cursor.execute("SELECT asin FROM produto;")
         for row in cursor.fetchall():
             produtos_existentes.add(row[0])
         
         cursor.close()
         conn.close()
 
-        # Agora, insira os pares de produtos similares somente se ambos existirem
+        # inserir produtos similares somente se ambos existirem
         conn = psycopg2.connect(**self.config_db)
         cursor = conn.cursor()
 
@@ -261,17 +272,17 @@ class BancoDeDados:
         """
         self.executar_comando(comandos, reviews, muitos=True)
 
-# Funções de processamento de arquivo
 def processar_arquivo(nome_arquivo):
+    """Lê os dados do cliente, grupos e titulos"""
     ids_clientes = set()
     nomes_grupos = set()
 
     with open(nome_arquivo, 'r') as arquivo:
         for linha in arquivo:
-            if 'cliente:' in linha:
-                correspondencia = re.search(r'cliente:\s+(\w+)', linha)
+            if 'Id:' in linha:
+                correspondencia = re.search(r'Id:\s+(\w+)', linha)
                 if correspondencia:
-                    ids_clientes.add(correspondencia.group(1))
+                    ids_clientes.add(str(correspondencia.group(1)).strip())
             elif 'grupo:' in linha and 'titulo:' not in linha:
                 nome_grupo = ' '.join(linha.split('grupo:', 1)[1].strip().split()).upper()
                 if nome_grupo:
@@ -280,6 +291,7 @@ def processar_arquivo(nome_arquivo):
     return ids_clientes, nomes_grupos
 
 def extrair_dados_produtos(nome_arquivo):
+    """Parser para os outros dados, assim não há erros de falta de elementos"""
     produtos = []
     produto_atual = None
 
@@ -329,13 +341,13 @@ if __name__ == "__main__":
     print("Tabelas criadas!")
     
     print("Processando arquivo..")
-    ids_clientes, nomes_grupos = processar_arquivo('teste.txt')
+    ids_clientes, nomes_grupos = processar_arquivo(DATA_PATH)
     print("Inserindo clientes...")
     postgres.inserir_clientes(ids_clientes)
     print("Inserindo grupos...")
     postgres.inserir_grupos(nomes_grupos)
     print("Extraindo dados de produtos...")
-    produtos = extrair_dados_produtos('teste.txt')
+    produtos = extrair_dados_produtos(DATA_PATH)
     print("Inserindo produtos...")
     postgres.inserir_produtos(produtos)
     print("Inserindo vategorias...")
@@ -345,5 +357,5 @@ if __name__ == "__main__":
     print("Inserindo produtos similares...")
     postgres.inserir_produtos_similares(produtos)
     print("Inserindo avaliações...")
-    postgres.extrair_e_inserir_avaliacoes('teste.txt')
+    postgres.extrair_e_inserir_avaliacoes(DATA_PATH)
     print("Processo finalizado!")
