@@ -81,8 +81,19 @@ def main():
         elif op == '3':
             product_id = input("Digite o ID do produto: ")
             query = f"""
-                SELECT rating, created_at FROM product_reviews
-                WHERE product_id = {product_id} ORDER BY created_at ASC;
+                SELECT 
+                    r.dataCriacao, 
+                    AVG(r.notaAvaliacao) AS mediaAvaliacao
+                FROM 
+                    review r
+                JOIN 
+                    produto p ON r.idProduto = p.idProduto
+                WHERE 
+                    p.idProduto = {product_id}
+                GROUP BY 
+                    r.dataCriacao
+                ORDER BY 
+                    r.dataCriacao;
             """
             executar(query, filename)
 
@@ -110,27 +121,42 @@ def main():
 
         elif op == '6':
             query = """
-                WITH helpful_categories AS (
-                    SELECT pc.category_name, AVG(pr.helpful) AS avg_helpful, ROW_NUMBER() OVER (ORDER BY AVG(pr.helpful) DESC) AS rank_helpful
-                    FROM product_reviews pr 
-                    JOIN product p ON pr.product_id = p.product_id 
-                    JOIN product_category_link pl ON pl.product_id = p.product_id
-                    JOIN product_categories pc ON pc.category_id = pl.category_id
-                    WHERE pr.helpful > 0 GROUP BY pc.category_name
-                )
-                SELECT * FROM helpful_categories WHERE rank_helpful <= 5;
+                SELECT 
+                    c.nomeCategoria,
+                    AVG(r.util) AS mediaAvaliacoesUteis
+                FROM 
+                    categorias c
+                JOIN 
+                    produto_categoria pc ON c.idCategoria = pc.idCategoria
+                JOIN 
+                    produto p ON pc.idProduto = p.idProduto
+                JOIN 
+                    review r ON r.idProduto = p.idProduto
+                GROUP BY 
+                    c.nomeCategoria
+                ORDER BY 
+                    mediaAvaliacoesUteis DESC
+                LIMIT 5;
             """
             executar(query, filename)
 
         elif op == '7':
             query = """
-                WITH top_reviewers_per_group AS (
-                    SELECT p.group_id, pr.customer_id, COUNT(*) AS review_count, ROW_NUMBER() OVER (PARTITION BY p.group_id ORDER BY COUNT(*) DESC) AS rank_reviewer
-                    FROM product_reviews pr 
-                    JOIN product p ON pr.product_id = p.product_id 
-                    GROUP BY p.group_id, pr.customer_id
-                )
-                SELECT group_id, customer_id, review_count FROM top_reviewers_per_group WHERE rank_reviewer <= 10;
+                SELECT 
+                    g.nomeGrupo,
+                    r.idCliente,
+                    COUNT(r.idReview) AS totalComentarios
+                FROM 
+                    review r
+                JOIN 
+                    produto p ON r.idProduto = p.idProduto
+                JOIN 
+                    grupo g ON p.idGrupo = g.idGrupo
+                GROUP BY 
+                    g.nomeGrupo, r.idCliente
+                ORDER BY 
+                    totalComentarios DESC
+                LIMIT 10;
             """
             executar(query, filename)
 

@@ -1,4 +1,4 @@
-DATA_PATH = "amazon-data.txt"
+DATA_PATH = "amazon-meta.txt"
 
 import sys
 import subprocess
@@ -193,10 +193,14 @@ class BancoDeDados:
                     for parte in categoria_partes:
                         if len(categoria_partes) >= 2:
                             id_categoria_str = re.findall( r'\[(.*?)\]', parte)
-                            if id_categoria_str[0].isdigit():
-                                id_categoria = int(id_categoria_str[0])
-                                produto_categoria.append((produto['id_produto'], id_categoria))
-                            else:
+                            Verificador = False
+                            for c_str in id_categoria_str:
+                                if c_str.isdigit():
+                                    Verificador = True
+                                    id_categoria = int(c_str)
+                                    produto_categoria.append((produto['id_produto'], id_categoria))
+                                    break
+                            if Verificador == False:
                                 print(f"ID da categoria não é um número válido: {id_categoria_str}")
                         else:
                             print(f"Categoria malformada: {categoria}")
@@ -295,7 +299,7 @@ def extrair_dados_produtos(nome_arquivo):
     products = []
     current_product = None
 
-    with open(filename, 'r') as file:
+    with open(DATA_PATH, 'r') as file:
         for line in file:
             if line.startswith("Id:"):
                 if current_product:
