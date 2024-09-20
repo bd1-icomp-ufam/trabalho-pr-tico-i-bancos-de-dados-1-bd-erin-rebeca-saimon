@@ -2,8 +2,12 @@
 
 # Trabalho Prático de Banco de Dados
 Rebea Madi Oliveira
+
 Erin Dante
+
 Saimnon Tavares
+
+A documentação do projeto está em: `documentacao/tp1_3.1.pdf`
 
 ## Configurando o ambiente
 Após clonar o repositório para o seu desktop.
@@ -27,6 +31,15 @@ Depois você deve subir o docker-compose com o postgres. Da primeira vez vai dem
 docker-compose up -d
 ```
 
+Para entrar no container execute:
+```bash
+docker exec -it trabalho-pr-tico-i-bancos-de-dados-1-bd-erin-rebeca-saimon_postgres_1 sh
+```
+Para entrar no ambiente psql:
+```bash
+psql -U postgres
+```
+
 ### Python
 
 Adicione o arquivo de dados da amazon dendo da pasta scripts.
@@ -35,5 +48,9 @@ Vá até o diretório de scripts e execute:
 ```bash
 python3 tp1_3.2.py
 ```
-
 Espere até o script de criação ser sexecutado.
+
+Para acessar o dashboard execute:
+```bash
+python3 tp1_3.3.py
+```

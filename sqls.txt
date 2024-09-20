@@ -1,0 +1,40 @@
+--consulta 1
+SELECT * FROM (
+    SELECT * FROM review r
+    INNER JOIN produto p ON r.idProduto = p.idProduto
+    WHERE p.idProduto = {idproduto}
+    ORDER BY notaAvaliacao DESC, util DESC
+    LIMIT 5
+)
+UNION ALL
+SELECT * FROM (
+    SELECT * FROM review r
+    INNER JOIN produto p ON r.idProduto = p.idProduto
+    WHERE p.idProduto = {idproduto}
+    ORDER BY notaavaliacao asc, util DESC
+    LIMIT 5
+);
+
+--consulta 2
+SELECT ps.idSimilar ,ps.asinProdutoSimilar ,p2.rankVendas 
+FROM produto_similar ps
+JOIN produto p1 ON ps.asinProduto = p1.asin
+JOIN produto p2 ON ps.asinProdutoSimilar = p2.asin
+WHERE p2.rankVendas > p1.rankVendas and p1.asin = {asin}
+ORDER BY p2.rankVendas DESC;
+
+--consulta 4  
+SELECT *
+FROM (
+    SELECT *, ROW_NUMBER() OVER (PARTITION BY idgrupo ORDER BY rankvendas DESC) AS rank
+    FROM produto
+) AS lideres
+WHERE rank <= 10 AND rankvendas IS NOT NULL;
+
+
+--consulta 5
+WITH uteis AS (
+SELECT idproduto, AVG(util) AS avgutil, ROW_NUMBER() OVER (ORDER BY AVG(util) DESC) AS rankutil
+FROM review 
+  WHERE util > 0 GROUP BY idproduto)
+SELECT * FROM uteis WHERE rankutil <= 10;

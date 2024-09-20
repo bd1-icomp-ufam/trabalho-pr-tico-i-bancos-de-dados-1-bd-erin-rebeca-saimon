@@ -1,2 +1,2 @@
-*.txt
+scripts/*.txt
 postgres-data/
