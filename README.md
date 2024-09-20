@@ -49,8 +49,7 @@ Vá até o diretório de scripts:
 cd scripts
 ```
 
-No script `tp1_3.2.py` a variavel do caminho do arquivo pra ser processado
-É a DATA_PATH em tp1_3.2
+No script `tp1_3.2.py` a variavel do caminho do arquivo pra ser processado é DATA_PATH.
 
 Execute:
 ```bash
