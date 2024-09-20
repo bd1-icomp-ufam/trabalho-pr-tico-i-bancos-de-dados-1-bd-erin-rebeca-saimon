@@ -25,7 +25,7 @@ Instalando na linha de comando
 
 Criar pasta `postgres-data` na raiz do projeto. Essa pasta **não deve ser enviada** para o github.
 
-Depois você deve subir o docker-compose com o postgres. Da primeira vez vai demorar um pouco, e fique de olho nos logs para qualquer erro.
+Depois você deve subir o docker-compose com o postgres. Na primeira vez vai demorar um pouco, fique de olho nos logs.
 
 ```bash
 docker-compose up -d
@@ -42,15 +42,20 @@ psql -U postgres
 
 ### Python
 
-Adicione o arquivo de dados da amazon dendo da pasta scripts.
+Adicione o arquivo de dados da amazon dentro da pasta scripts.
 
-Vá até o diretório de scripts e execute:
+Vá até o diretório de scripts:
+```bash
+cd scripts
+```
+
+Execute:
 ```bash
 python3 tp1_3.2.py
 ```
 Espere até o script de criação ser sexecutado.
 
-Para acessar o dashboard execute:
+Para acessar o dashboard execute na pasta scripts:
 ```bash
 python3 tp1_3.3.py
 ```
