@@ -42,15 +42,20 @@ psql -U postgres
 
 ### Python
 
-Adicione o arquivo de dados da amazon dendo da pasta scripts.
+Adicione o arquivo de dados da amazon dentro da pasta scripts.
 
-Vá até o diretório de scripts e execute:
+Vá até o diretório de scripts:
+```bash
+cd scripts
+```
+
+Execute:
 ```bash
 python3 tp1_3.2.py
 ```
 Espere até o script de criação ser sexecutado.
 
-Para acessar o dashboard execute:
+Para acessar o dashboard execute na pasta scripts:
 ```bash
 python3 tp1_3.3.py
 ```
