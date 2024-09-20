@@ -33,7 +33,7 @@ docker-compose up -d
 
 Para entrar no container execute:
 ```bash
-docker exec -it trabalho-pr-tico-i-bancos-de-dados-1-bd-erin-rebeca-saimon_postgres_1 sh
+docker exec -it trabalho-pr-tico-i-bancos-de-dados-1-bd-erin-rebeca-saimon-postgres-1 sh
 ```
 Para entrar no ambiente psql:
 ```bash
@@ -55,7 +55,7 @@ Execute:
 ```bash
 python3 tp1_3.2.py
 ```
-Espere até o script de criação ser sexecutado.
+Espere até o script de criação ser ser executado.
 
 Para acessar o dashboard execute na pasta scripts:
 ```bash
