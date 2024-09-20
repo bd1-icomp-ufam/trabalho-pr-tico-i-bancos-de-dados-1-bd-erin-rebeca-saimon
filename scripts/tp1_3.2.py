@@ -283,8 +283,8 @@ def processar_arquivo(nome_arquivo):
                 correspondencia = re.search(r'Id:\s+(\w+)', linha)
                 if correspondencia:
                     ids_clientes.add(str(correspondencia.group(1)).strip())
-            elif 'grupo:' in linha and 'titulo:' not in linha:
-                nome_grupo = ' '.join(linha.split('grupo:', 1)[1].strip().split()).upper()
+            elif 'group:' in linha and 'title:' not in linha:
+                nome_grupo = ' '.join(linha.split('group:', 1)[1].strip().split()).upper()
                 if nome_grupo:
                     nomes_grupos.add(nome_grupo)
 
@@ -292,47 +292,47 @@ def processar_arquivo(nome_arquivo):
 
 def extrair_dados_produtos(nome_arquivo):
     """Parser para os outros dados, assim não há erros de falta de elementos"""
-    produtos = []
-    produto_atual = None
+    products = []
+    current_product = None
 
-    with open(nome_arquivo, 'r') as arquivo:
-        for linha in arquivo:
-            if linha.startswith("Id:"):
-                if produto_atual:
-                    produtos.append(produto_atual)
-                id_produto = int(linha.split()[1].strip())
-                produto_atual = {
-                    'id_produto': id_produto,
+    with open(filename, 'r') as file:
+        for line in file:
+            if line.startswith("Id:"):
+                if current_product:
+                    products.append(current_product)
+                product_id = int(line.split()[1].strip())
+                current_product = {
+                    'id_produto': product_id,
                     'ASIN': '',
                     'descontinuado': False,
                     'categorias': [],
                     'produtos_similares': [],
                     'valor_similar': 0
                 }
-            elif linha.startswith("ASIN:"):
-                produto_atual['ASIN'] = linha.split()[1].strip()
-            elif 'produto descontinuado' in linha:
-                produto_atual['descontinuado'] = True
-            elif 'titulo:' in linha and produto_atual and not produto_atual.get('descontinuado', False):
-                produto_atual['titulo'] = linha.split('titulo:', 1)[1].strip()
-            elif 'grupo:' in linha and produto_atual and not produto_atual.get('descontinuado', False):
-                produto_atual['grupo'] = linha.split('grupo:', 1)[1].strip()
-            elif 'rank_vendas:' in linha and produto_atual and not produto_atual.get('descontinuado', False):
-                produto_atual['rank_vendas'] = int(linha.split('rank_vendas:', 1)[1].strip())
-            elif 'similar:' in linha and produto_atual and not produto_atual.get('descontinuado', False):
-                partes = linha.split()
-                quantidade_similares = int(partes[1])
-                produto_atual['valor_similar'] = quantidade_similares
-                produto_atual['produtos_similares'] = partes[2:2 + quantidade_similares] if quantidade_similares > 0 else []
-            elif 'categorias:' in linha and produto_atual and not produto_atual.get('descontinuado', False):
-                produto_atual['categorias'] = []
-            elif '|' in linha and produto_atual and not produto_atual.get('descontinuado', False):
-                produto_atual['categorias'].append(linha.strip())
+            elif line.startswith("ASIN:"):
+                current_product['ASIN'] = line.split()[1].strip()
+            elif 'discontinued product' in line:
+                current_product['descontinuado'] = True
+            elif 'title:' in line and current_product and not current_product.get('descontinuado', False):
+                current_product['titulo'] = line.split('title:', 1)[1].strip()
+            elif 'group:' in line and current_product and not current_product.get('descontinuado', False):
+                current_product['grupo'] = line.split('group:', 1)[1].strip()
+            elif 'salesrank:' in line and current_product and not current_product.get('descontinuado', False):
+                current_product['salesrank'] = int(line.split('salesrank:', 1)[1].strip())
+            elif 'similar:' in line and current_product and not current_product.get('descontinuado', False):
+                parts = line.split()
+                similar_count = int(parts[1])
+                current_product['valor_similar'] = similar_count
+                current_product['produtos_similares'] = parts[2:2 + similar_count] if similar_count > 0 else []
+            elif 'categories:' in line and current_product and not current_product.get('descontinuado', False):
+                current_product['categorias'] = []
+            elif '|' in line and current_product and not current_product.get('descontinuado', False):
+                current_product['categorias'].append(line.strip())
 
-        if produto_atual:
-            produtos.append(produto_atual)
+        if current_product:
+            products.append(current_product)
 
-    return produtos
+    return products
 
 if __name__ == "__main__":
     postgres = BancoDeDados('postgres', 'postgres', 'postgres', 'localhost', 5432)
