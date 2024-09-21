@@ -311,7 +311,8 @@ def extrair_dados_produtos(nome_arquivo):
                     'descontinuado': False,
                     'categorias': [],
                     'produtos_similares': [],
-                    'valor_similar': 0
+                    'valor_similar': 0,
+                    'rank_vendas': None
                 }
             elif line.startswith("ASIN:"):
                 current_product['ASIN'] = line.split()[1].strip()
@@ -322,7 +323,9 @@ def extrair_dados_produtos(nome_arquivo):
             elif 'group:' in line and current_product and not current_product.get('descontinuado', False):
                 current_product['grupo'] = line.split('group:', 1)[1].strip()
             elif 'salesrank:' in line and current_product and not current_product.get('descontinuado', False):
-                current_product['salesrank'] = int(line.split('salesrank:', 1)[1].strip())
+                #print(line)
+                current_product['rank_vendas'] = int(line.split('salesrank:', 1)[1].strip())
+                #print(current_product['rank_vendas']);
             elif 'similar:' in line and current_product and not current_product.get('descontinuado', False):
                 parts = line.split()
                 similar_count = int(parts[1])
@@ -362,4 +365,5 @@ if __name__ == "__main__":
     postgres.inserir_produtos_similares(produtos)
     print("Inserindo avaliações...")
     postgres.extrair_e_inserir_avaliacoes(DATA_PATH)
+    #print(produtos[7].rank_vendas)
     print("Processo finalizado!")
