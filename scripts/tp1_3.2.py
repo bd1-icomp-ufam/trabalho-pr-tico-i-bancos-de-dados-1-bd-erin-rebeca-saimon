@@ -227,6 +227,7 @@ class BancoDeDados:
         cursor.execute("SELECT asin FROM produto;")
         for row in cursor.fetchall():
             produtos_existentes.add(row[0])
+        #print(produtos_existentes)
         
         cursor.close()
         conn.close()
@@ -240,10 +241,10 @@ class BancoDeDados:
                 asin_produto = produto['ASIN']
                 if asin_produto not in produtos_existentes:
                     continue  # Pular produtos que não existem na tabela
-
                 for asin_similar in produto.get('produtos_similares', []):
                     if asin_similar in produtos_existentes:
                         produto_similar.append((asin_produto, asin_similar))
+                        print("aaaaa", produto_similar, asin_similar)
 
         comandos = """
             INSERT INTO produto_similar (asinProduto, asinProdutoSimilar)
@@ -259,21 +260,31 @@ class BancoDeDados:
     def extrair_e_inserir_avaliacoes(self, nome_arquivo):
         reviews = []
         with open(nome_arquivo, 'r') as arquivo:
+            verificador = False
             for linha in arquivo:
-                if 'review:' in linha:
+                if linha == '\n':
+                    verificador = False
+                if 'Id:' in linha:
+                    correspondencia = re.search(r'Id:\s+(\w+)', linha)
+                    if correspondencia:
+                        idproduto = str(correspondencia.group(1)).strip()
+                if verificador:
                     partes = linha.split()
-                    data = partes[1]
-                    votos = int(partes[2])
-                    nota = int(partes[3])
-                    util = int(partes[4])
-                    id_produto = int(partes[5])
-                    id_cliente = partes[6]
+                    data = partes[0]
+                    votos = int(partes[6])
+                    nota = int(partes[4])
+                    util = int(partes[8])
+                    id_produto = idproduto
+                    id_cliente = partes[2]
                     reviews.append((data, votos, nota, util, id_produto, id_cliente))
+                if 'reviews:' in linha:
+                    verificador = True
         comandos = """
             INSERT INTO review (dataCriacao, votos, notaAvaliacao, util, idProduto, idCliente)
             VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT DO NOTHING
         """
+        #print(reviews)
         self.executar_comando(comandos, reviews, muitos=True)
 
 def processar_arquivo(nome_arquivo):
@@ -367,3 +378,4 @@ if __name__ == "__main__":
     postgres.extrair_e_inserir_avaliacoes(DATA_PATH)
     #print(produtos[7].rank_vendas)
     print("Processo finalizado!")
+    #print(produtos[2])
